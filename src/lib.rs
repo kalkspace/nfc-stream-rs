@@ -1,6 +1,5 @@
 use async_stream::stream;
-use futures_core::stream::Stream;
-use log::{debug, error};
+use futures::Stream;
 use pcsc::*;
 use std::error::Error as StdError;
 use std::thread;
@@ -22,10 +21,10 @@ enum MeteCardState {
 fn get_mete_card_state(card: &Card) -> Result<MeteCardState, Box<dyn StdError>> {
     // Send KalkGetränk APDU
     let apdu = b"\x00\xA4\x04\x00\x0d\xff\x4b\x61\x6c\x6b\x47\x65\x74\x72\xc3\xa4\x6e\x6b\x00";
-    debug!("Sending APDU: {:?}", apdu);
+    tracing::debug!("Sending APDU: {:?}", apdu);
     let mut rapdu_buf = [0; MAX_BUFFER_SIZE];
     let rapdu = card.transmit(apdu, &mut rapdu_buf)?;
-    debug!("APDU response: {:x?}", rapdu);
+    tracing::debug!("APDU response: {:x?}", rapdu);
     let l = rapdu.len();
     if l == 0 {
         return Ok(MeteCardState::UnsupportedApplicationSelect);
@@ -35,9 +34,9 @@ fn get_mete_card_state(card: &Card) -> Result<MeteCardState, Box<dyn StdError>> 
     }
 
     let apdu = b"\xd0\x00\x00\x00\x24";
-    debug!("Sending APDU: {:?}", apdu);
+    tracing::debug!("Sending APDU: {:?}", apdu);
     let rapdu = card.transmit(apdu, &mut rapdu_buf)?;
-    debug!("APDU response: {:x?}", rapdu);
+    tracing::debug!("APDU response: {:x?}", rapdu);
     let l = rapdu.len();
     if l == 0 {
         return Ok(MeteCardState::UnsupportedApplicationSelect);
@@ -52,10 +51,10 @@ fn get_mete_card_state(card: &Card) -> Result<MeteCardState, Box<dyn StdError>> 
 
 fn get_uid(card: &Card) -> Result<Option<Vec<u8>>, Box<dyn StdError>> {
     let apdu = &[0xFF, 0xCA, 0x00, 0x00, 0x00];
-    debug!("Sending APDU: {:?}", apdu);
+    tracing::debug!("Sending APDU: {:?}", apdu);
     let mut rapdu_buf = [0; MAX_BUFFER_SIZE];
     let rapdu = card.transmit(apdu, &mut rapdu_buf)?;
-    debug!("APDU response: {:x?}", rapdu);
+    tracing::debug!("APDU response: {:x?}", rapdu);
     let l = rapdu.len();
     // min length 3: at least one u8 as id + successful response
     if l < 3 || rapdu[l - 2] != 0x90 || rapdu[l - 1] != 0x00 {
@@ -167,7 +166,7 @@ impl Service {
                         }
                     }
                     Err(Error::NoSmartcard) => {
-                        debug!("A smartcard is not present in the reader.");
+                        tracing::debug!("A smartcard is not present in the reader.");
                         continue;
                     }
                     Err(err) => return Err(err.into()),
@@ -197,7 +196,7 @@ pub fn run() -> Result<impl Stream<Item = Option<CardDetail>>, Box<dyn StdError>
                 Ok(result) => rt.block_on(async {
                     tx.send(result).await.unwrap();
                 }),
-                Err(e) => error!("Nfc Error: {:?}", e),
+                Err(e) => tracing::error!("Nfc Error: {:?}", e),
             }
         }
     });

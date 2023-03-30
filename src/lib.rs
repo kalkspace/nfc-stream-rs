@@ -21,7 +21,7 @@ enum MeteCardState {
 fn get_mete_card_state(card: &Card) -> Result<MeteCardState, Box<dyn StdError>> {
     // Send KalkGetränk APDU
     let apdu = b"\x00\xA4\x04\x00\x0d\xff\x4b\x61\x6c\x6b\x47\x65\x74\x72\xc3\xa4\x6e\x6b\x00";
-    tracing::debug!("Sending APDU: {:?}", apdu);
+    tracing::debug!("Sending APDU: {:x?}", apdu);
     let mut rapdu_buf = [0; MAX_BUFFER_SIZE];
     let rapdu = card.transmit(apdu, &mut rapdu_buf)?;
     tracing::debug!("APDU response: {:x?}", rapdu);
@@ -34,7 +34,7 @@ fn get_mete_card_state(card: &Card) -> Result<MeteCardState, Box<dyn StdError>> 
     }
 
     let apdu = b"\xd0\x00\x00\x00\x24";
-    tracing::debug!("Sending APDU: {:?}", apdu);
+    tracing::debug!("Sending APDU: {:x?}", apdu);
     let rapdu = card.transmit(apdu, &mut rapdu_buf)?;
     tracing::debug!("APDU response: {:x?}", rapdu);
     let l = rapdu.len();
@@ -51,7 +51,7 @@ fn get_mete_card_state(card: &Card) -> Result<MeteCardState, Box<dyn StdError>> 
 
 fn get_uid(card: &Card) -> Result<Option<Vec<u8>>, Box<dyn StdError>> {
     let apdu = &[0xFF, 0xCA, 0x00, 0x00, 0x00];
-    tracing::debug!("Sending APDU: {:?}", apdu);
+    tracing::debug!("Sending APDU: {:x?}", apdu);
     let mut rapdu_buf = [0; MAX_BUFFER_SIZE];
     let rapdu = card.transmit(apdu, &mut rapdu_buf)?;
     tracing::debug!("APDU response: {:x?}", rapdu);
